@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <title>Test</title>
+        <script src="test.js" defer></script>
+        <script defer>
+            const numAddends = Math.pow(2, 30);
+            document.addEventListener('click', function(e) {
+                if (e.target.matches(['input[type="button"'])) {
+                    const startTime = performance.now()
+                    const numThreads = Math.max(parseInt(document.getElementById('numthreads').value), 1);
+                    const perThread = Math.floor(numAddends / numThreads);
+                    let sum = 0;
+                    let numCompleted = 0;
+                    for (let thread = 0; thread < numThreads; ++thread) {
+                        const worker = new Worker("worker.js");
+                        worker.postMessage([e.target.id, 1 + thread * perThread, (thread + 1) * perThread]);
+                        worker.onmessage = function(e) {
+                            sum += e.data;
+                            numCompleted++;
+                            if (numCompleted === numThreads) {
+                                const stopTime = performance.now();
+                                const executionTime = (stopTime - startTime) / 1000;
+                                document.getElementById('result').innerHTML = 'The sum is ' + sum + '.<br>Time: ' + executionTime + ' s';
+                            }
+                        }
+                    }
+                }
+            }, false);
+        </script>
+    </head>
+    <body>
+        <form id="form" action="">
+            <label for="numthreads">Number of threads:</label>
+            <input type="number" id="numthreads" value="4">
+            <input type="button" id="runjs" value="Run JS!">
+            <input type="button" id="runwasm" value="Run WASM!">
+        </form>
+        <div id="result"></div>
+    </body>
+</html>
